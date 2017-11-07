@@ -19,10 +19,19 @@ MongoClient.connect(dbUrl, function (err, db) {
   } else {
     // HURRAY!! We are connected. :)
     console.log('Connection established to', dbUrl);
+    collection = db.collection('pokemon');
+    collection.remove(); // Remove anything that was there before
+    collection.insert(pokemon, function (err, result) {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log('Inserted documents into the "pokemon" collection. The documents inserted with "_id" are:', result.length, result);
+      }
 
-    /**
-     * TODO: insert data here, once we've successfully connected
-     */
+      // Dont Close connection
+      // db.close()
+    });
+
   }
 });
 
@@ -33,14 +42,30 @@ router.get('/', function(req, res) {
 
 router.get('/pokemon', function(req, res) {
   console.log("In Pokemon");
-  res.send(pokemon);
+  collection.find().toArray(function(err, result) {
+    if(err) {
+      console.log(err);
+    } else if (result.length) {
+      console.log("Query Worked");
+      console.log(result);
+      res.send(result);
+    } else {
+      console.log("No Documents found");
+    }
+  });
 });
 
 router.post('/pokemon', function(req, res) {
     console.log("In Pokemon Post");
     console.log(req.body);
-    pokemon.push(req.body);
-    res.end('{"success" : "Updated Successfully", "status" : 200}');
+    collection.insert(req.body, function (err, result) {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log('Inserted documents into the "pokemon" collection. The documents inserted with "_id" are:', result);
+        res.end('{"success" : "Updated Successfully", "status" : 200}');
+      }
+    });
 });
 
 module.exports = router;
